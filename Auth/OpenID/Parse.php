@@ -101,7 +101,7 @@ class Auth_OpenID_Parse {
      * Starts with the tag name at a word boundary, where the tag name
      * is not a namespace
      */
-    var $_tag_expr = "<%s\b(?!:)([^>]*?)(?:\/>|>(.*?)(?:<\/?%s\s*>|\Z))";
+    var $_tag_expr = "<%s\b(?!:)([^>]*?)(?:\/>|>(.*)(?:<\/?%s\s*>|\Z))";
 
     var $_attr_find = '\b(\w+)=("[^"]*"|\'[^\']*\'|[^\'"\s\/<>]+)';
 
@@ -218,17 +218,17 @@ class Auth_OpenID_Parse {
     
     function match($regexp, $text, &$match)
     {
-    	if (!is_callable('mb_ereg_search_init')) {
-    		return preg_match($regexp, $text, $match);
-    	} else {
-            $regexp = substr($regexp, 1, strlen($regexp) - 2 - strlen($this->_re_flags));
-    		mb_ereg_search_init($text, $regexp);
-            if (!mb_ereg_search()) {
-            	return false;
-            }
-            list($match) = mb_ereg_search_getregs();
-            return true;
-    	}
+        if (!is_callable('mb_ereg_search_init')) {
+            return preg_match($regexp, $text, $match);
+        }
+
+        $regexp = substr($regexp, 1, strlen($regexp) - 2 - strlen($this->_re_flags));
+        mb_ereg_search_init($text);
+        if (!mb_ereg_search($regexp)) {
+            return false;
+        }
+        $match = mb_ereg_search_getregs();
+        return true;
     }
 
     /**
@@ -269,8 +269,8 @@ class Auth_OpenID_Parse {
 
         // Try to find the <HEAD> tag.
         $head_re = $this->headFind();
-        $html_match = '';
-        if (!$this->match($html_re, $stripped, $html_match)) {
+        $head_match = array();
+        if (!$this->match($head_re, $stripped, $head_match)) {
                      ini_set( 'pcre.backtrack_limit', $old_btlimit );
                      return array();
         }
@@ -278,7 +278,7 @@ class Auth_OpenID_Parse {
         $link_data = array();
         $link_matches = array();
 
-        if (!preg_match_all($this->_link_find, $head_match,
+        if (!preg_match_all($this->_link_find, $head_match[0],
                             $link_matches)) {
             ini_set( 'pcre.backtrack_limit', $old_btlimit );
             return array();

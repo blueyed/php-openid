@@ -817,11 +817,12 @@ class Auth_OpenID_CheckIDRequest extends Auth_OpenID_Request {
      */
     function returnToVerified()
     {
+        $fetcher = Auth_Yadis_Yadis::getHTTPFetcher();
         return call_user_func_array($this->verifyReturnTo,
-                                    array($this->trust_root, $this->return_to));
+                                    array($this->trust_root, $this->return_to, $fetcher));
     }
 
-    static function fromMessage(&$message, $server)
+    static function fromMessage($message, $server)
     {
         $mode = $message->getArg(Auth_OpenID_OPENID_NS, 'mode');
         $immediate = null;
@@ -1463,12 +1464,12 @@ class Auth_OpenID_Encoder {
                            array('location' => $location));
         } else if ($encode_as == Auth_OpenID_ENCODE_HTML_FORM) {
           $wr = new $cls(AUTH_OPENID_HTTP_OK, array(),
-                         $response->toFormMarkup());
+                         $response->toHTML());
         } else {
             return new Auth_OpenID_EncodingError($response);
         }
         /* Allow the response to carry a custom error code (ex: for Association errors) */
-        if($response->code) {
+        if(isset($response->code)) {
             $wr->code = $response->code;
         }
         return $wr;
